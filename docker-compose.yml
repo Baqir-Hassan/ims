@@ -1,0 +1,26 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+        IMS_MODULES: ${IMS_MODULES:-}
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+    depends_on:
+      - api
+
+  api:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      IMS_MODULES: ${IMS_MODULES:-}
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL to the PostgreSQL database}
+      RUMANZA_TOKEN_SECRET: ${RUMANZA_TOKEN_SECRET:?set RUMANZA_TOKEN_SECRET to a long random value}
+      RUMANZA_SETUP_TOKEN: ${RUMANZA_SETUP_TOKEN:?set RUMANZA_SETUP_TOKEN before creating the first manager}
+      RUMANZA_SEED_DEMO_DATA: "false"
+      RUMANZA_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:4173

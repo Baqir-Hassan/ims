@@ -1,0 +1,18 @@
+# Repository-wide ignores. backend/ and frontend/ have their own .gitignore files.
+
+# env files
+.env*
+!.env.example
+
+# test caches run from the repository root
+.pytest_cache/
+
+# editors / OS
+.DS_Store
+.vscode/
+.idea/
+
+# local CodeGraph index
+.codegraph/
+backend/
+frontend/

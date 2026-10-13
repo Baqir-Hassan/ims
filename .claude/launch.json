@@ -1,0 +1,100 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ims-api-preview",
+      "runtimeExecutable": "D:\\Projects\\ims\\backend\\.venv\\Scripts\\python.exe",
+      "runtimeArgs": [
+        "C:\\Users\\Baqir\\AppData\\Local\\Temp\\claude\\D--Projects-RumanzaCMS\\7c5a9b55-a265-4b9c-b1e8-f461882a19af\\scratchpad\\preview_api.py"
+      ],
+      "port": 8000
+    },
+    {
+      "name": "ims-frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "D:\\Projects\\ims\\frontend",
+        "run",
+        "dev"
+      ],
+      "port": 3000
+    },
+    {
+      "name": "ims-api-preview-3005",
+      "runtimeExecutable": "D:\\Projects\\ims\\backend\\.venv\\Scripts\\python.exe",
+      "runtimeArgs": [
+        "C:\\Users\\Baqir\\AppData\\Local\\Temp\\claude\\D--Projects-ims\\7523817c-019f-4c08-aa7f-8f356f667f6b\\scratchpad\\preview_api.py"
+      ],
+      "port": 8000
+    },
+    {
+      "name": "ims-pilot-api",
+      "runtimeExecutable": "D:\\Projects\\ims\\backend\\.venv\\Scripts\\python.exe",
+      "runtimeArgs": [
+        "C:\\Users\\Baqir\\AppData\\Local\\Temp\\claude\\D--Projects-ims\\7523817c-019f-4c08-aa7f-8f356f667f6b\\scratchpad\\pilot_api_showcase.py"
+      ],
+      "port": 8010
+    },
+    {
+      "name": "ims-pilot-frontend",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:\\Users\\Baqir\\AppData\\Local\\Temp\\claude\\D--Projects-ims\\7523817c-019f-4c08-aa7f-8f356f667f6b\\scratchpad\\pilot_front.mjs"
+      ],
+      "port": 3006
+    },
+    {
+      "name": "ims-frontend-3005",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "D:\\Projects\\ims\\frontend",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "3005",
+        "--strictPort"
+      ],
+      "port": 3005
+    },
+    {
+      "name": "ims-pilot-brand-frontend",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:\\Users\\Baqir\\AppData\\Local\\Temp\\claude\\D--Projects-ims\\16d5c6fe-a029-4e0c-8a88-e96478f4053e\\scratchpad\\pilot_brand_front.mjs"
+      ],
+      "port": 3007
+    },
+    {
+      "name": "ims-ui-prototype",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8765",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "D:\\Projects\\ims\\prototype"
+      ],
+      "port": 8765
+    },
+    {
+      "name": "ims-frontend-svc",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "D:\\Projects\\ims\\frontend",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "3025",
+        "--strictPort"
+      ],
+      "port": 3025
+    }
+  ]
+}
