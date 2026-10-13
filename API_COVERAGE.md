@@ -117,7 +117,8 @@ Modules `catalog, finance, fnb_inventory, fnb_outlets, payroll_shifts`; features
 consolidated-role assignment refusal, Manager coverage of permission groups, approval policies and route role
 dependencies, waiter/cashier/cook writes, venue isolation, quantity-only inventory lead receipts, self clock-in/out, password
 login refusal for PIN roles and the read-only legacy-account report. Registry tests cover consolidation opt-in.
-Device/PIN sessions, cook stations and the later service endpoints remain tracked in `docs/SERVICE_BACKEND_PLAN.md`.
+Device/PIN sessions and cook stations are implemented in B2/B3 below; B4-B6 cover kitchen, till and stock.
+B7 and prototype-matching B8 remain incomplete, as tracked in `docs/SERVICE_BACKEND_PLAN.md`.
 
 
 ## Service authentication — B2
@@ -181,6 +182,7 @@ no B5 payment-write fields, tender rules or register endpoints are introduced by
 
 - GET /api/v1/kot/tickets accepts status and include_done. Cook venue/station are server-confined; pass cooks may filter the venue's stations.
 - PATCH /api/v1/kot/tickets/{id}/status supports Placed→Preparing→Ready, Ready→Preparing recall, Ready→Served pickup and owner-approved Served→Ready Undo before any payment; cancelled orders refuse Undo. Delivery/Undo permit outlets.order and outlets.kitchen; other kitchen transitions require outlets.kitchen.
+- Owner-approved PATCH /api/v1/kot/tickets/{id}/status Served→Preparing: kitchen group only, existing venue/station checks, cancellation and any-payment (including reversed) 409 guards under order-then-ticket locks. Same ticket/timestamps/done flags, Undo state recomputation, no stock/print/slip/alert creation, existing kot/orders events and audit. Full/pilot tests and source-based staff-meal/cost-centre/list answers: backend/docs/SERVICE_B4_REPORT.md addendum.
 - PATCH /api/v1/kot/tickets/{id}/lines/{order_line_id} stores/clears done_at for live lines, with kitchen and station checks, and announces kot.
 - Ticket reprint and unprinted alerts also confine station cooks. Shared print-agent alerts remain visible.
 - Existing item DELETE/cancel and whole-order cancel routes use pos_cooked_void for Preparing/Ready dishes. Manager approves; pending/rejected/withdrawn/failed/applied states retain KOT slips and order projections. Request and pending slip commit atomically.
@@ -204,3 +206,17 @@ that the live server has loaded the source or that the public database has been 
 
 
 B6 adds scoped GET /fnb/overview, /fnb/forecast and /fnb/batches/expiring; extended enquiry/ingredient/settings fields; /fnb/waste aliases; FIFO batch provenance; pilot second-manager purchase decisions; transactional stock events. See backend/docs/SERVICE_B6_REPORT.md for contracts and validation.
+
+## B8 preparation and seed boundary (2026-10-13)
+
+The current `python -m scripts.seed` still runs the older showcase by default; `--no-showcase` requests
+basic demo data, and an explicit service `--showcase` flag is not implemented. Do not run these commands
+on pilot/public data. B8 inspection found incomplete B7 reporting and prototype examples without complete
+backend relationships; `backend/docs/SERVICE_B8_REPORT.md` and `SERVICE_B8_SHOWCASE_MAP.md` record the
+prerequisite, mapping, pending decisions and intended rerun/security checks. No service showcase, generated
+device keys, disposable-schema workflow run, production migration or B9 sign-off is claimed by this preparation.
+
+Normal staff PIN creation/reset still requires a PIN change. The B8 requirement to waive that only for
+explicitly demo-seeded accounts is pending implementation. Device creation already stores only a secure
+digest and returns its key once; a future showcase must print newly created keys once after commit, never
+rotate/reveal existing keys on rerun, and keep credentials out of reports and saved evidence.

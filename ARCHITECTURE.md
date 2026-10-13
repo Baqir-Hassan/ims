@@ -4,7 +4,7 @@ IMS builds an F&B deployment from core plus members, finance, catalog, F&B inven
 
 ## Composition and boundaries
 
-Backend composition belongs in `backend/app/main.py`. The loader discovers manifests, always enables core, orders dependencies, and rejects a missing dependency before serving requests. `IMS_MODULES` selects modules and `IMS_FEATURES` selects module features (unset: everything); a deployment names a profile in `profiles/` (`full`, `pilot`) holding both lists. Each module owns its routes, contracts, tables, schema changes, seed, and registered contributions.
+Backend composition belongs in `backend/app/main.py`. The loader discovers manifests, always enables core, orders dependencies, and rejects a missing dependency before serving requests. `IMS_MODULES` selects modules and `IMS_FEATURES` selects module features (unset/empty: default features; consolidation is opt-in); a deployment names a profile in `profiles/` (`full`, `pilot`) holding both lists. Each module owns its routes, contracts, tables, schema changes, seed, and registered contributions.
 
 A module may use another **optionally** (`optional_depends_on`): it only orders loading, and the module's `when_enabled[name]` extras (routes, schema steps, registrations; the same fields as a manifest) apply only when that module is on. **Features** (`features[name]`) are extras a deployment can switch off. Code that imports an optional module lives in those extras or in a guarded branch (`active_registry().enabled(...)`), so it is never imported while that module is off. A module's schema fingerprint includes the optional modules and features applied to it, so switching one on later re-runs exactly the affected modules' schema steps (deferred foreign keys are added `NOT VALID`, then validated, with `core.db.ensure_foreign_key`).
 
@@ -92,12 +92,14 @@ are retained for migration; `python -m scripts.consolidate_roles` lists active l
 
 Ordering, payment and kitchen writes use `outlets.order`, `outlets.pay` and `outlets.kitchen`. Common venue screens
 use `outlets.serve`. Venue checks still use the role registry's scope values. Inventory leads receive dispatched
-requests only at their venue's kitchen via `fnb.receive` (quantities only; costs require `fnb.values`), and enter requests, waste and counts with the existing
+requests only at their venue's kitchen via `fnb.receive`; B6 also permits values in their own scoped
+stock/overview projections, without granting club-wide Finance reports. They enter requests, waste and counts with the existing
 location checks. The new roles can be rostered and clock their own attendance. Manager also covers the F&B
 manager's self-clock and roster eligibility. Password login rejects PIN roles with the service contract's 403.
 
-B2 PIN provisioning, devices and server sessions and B3 cook station assignment are still pending. The new roles
-are authorization groundwork; service sign-in and the complete service workflow are not yet ready for release.
+B2 provisioning/devices/sessions and B3 station assignments are implemented as described below. B4-B6
+kitchen, till and inventory work is implemented in source with phase-specific targeted evidence.
+B7 and B8 remain incomplete; the service pilot has not completed B9 or live release acceptance.
 
 
 ## Service authentication (B2, 2026-10-13)
@@ -128,13 +130,14 @@ additional protection; persistent device counters survive restarts. No keys, PIN
 or public projections. SQLAlchemy hides bound parameters in database error messages as well.
 
 The keyed `Module.staff_context` registry hook supplies role-owned identity details and shared-device roster
-order. Inventory projects the venue's kitchen location; outlets supplies service titles (cook is the pass until
-B3 adds stations). Staff rows and staff `Me` use the shared service contract. Legacy `scope` is accepted as a
-staff request alias for existing full-profile integrations; password-based venue accounts retain reassignment
-behavior. Non-null station assignment remains B3 and is refused rather than silently ignored.
+order. Inventory projects the venue's kitchen location; outlets supplies service titles and the B3
+station/pass assignment. Staff rows and staff `Me` use the shared service contract. Legacy `scope` is accepted
+as a staff request alias for existing full-profile integrations; password-based venue accounts retain
+reassignment behavior. B3 validates non-null station assignments through the owning staff hook.
 
 The owner approved `StaffUpdate.email` so moving a PIN account to a password role can supply both required
-credentials. The contract Changelog records it. B3 floor/order extensions and B4 station enforcement are pending.
+credentials. The contract Changelog records it. B3 floor/order extensions and B4 station enforcement are
+implemented below; their presence is not a live-server or public-schema verification.
 
 
 ## Service floor and staff extensions (B3, 2026-10-13)
@@ -180,6 +183,11 @@ from the database, lock the order before the ticket, and announce kot/orders aft
 Kitchen transitions require outlets.kitchen; pickups and owner-approved Undo also permit outlets.order.
 Held lines prevent automatic Served completion. Undo refuses cancelled orders or orders with any recorded
 payment and recomputes order readiness while existing inventory deduction markers prevent repeated consumption.
+Owner-approved Served-to-Preparing recall requires outlets.kitchen, so waiters/cashiers retain Undo but
+cannot recall to Preparing. Station/pass venue confinement applies; any recorded payment, including a
+reversed payment, blocks recall under order-before-ticket/payment locks. Recall retains done flags and
+accepted timestamps, clears ready_at, recomputes order state, and creates no stock movement, print job,
+slip or alert. The B4 pre-B7 addendum records full/pilot source and split regression evidence.
 
 The generic approval gate accepts an optional existing database transaction. Outlets uses it to commit
 approval requests and pending slips together; core imports no business module. pos_cooked_void defaults
@@ -216,3 +224,17 @@ explicit department settlement. Existing captured zero settlements/refund histor
 
 
 B6 inventory owns batch quantity/provenance and keeps weighted-average costing/journals. Finance retains PO, GRN and vendor-bill services. Pilot second-manager decisions serialize on the requisition row; ingredient mutations take ingredient locks before location/batch locks. Generic core service_openings projects outlets-owned opening hours to inventory without an import dependency or cross-table read. The inventory manifest owns the stock live topic. See backend/docs/SERVICE_B6_REPORT.md.
+
+## B8 preparation and seed boundary (2026-10-13)
+
+The current `python -m scripts.seed` still runs the older showcase by default; `--no-showcase` requests
+basic demo data, and an explicit service `--showcase` flag is not implemented. Do not run these commands
+on pilot/public data. B8 inspection found incomplete B7 reporting and prototype examples without complete
+backend relationships; `backend/docs/SERVICE_B8_REPORT.md` and `SERVICE_B8_SHOWCASE_MAP.md` record the
+prerequisite, mapping, pending decisions and intended rerun/security checks. No service showcase, generated
+device keys, disposable-schema workflow run, production migration or B9 sign-off is claimed by this preparation.
+
+Normal staff PIN creation/reset still requires a PIN change. The B8 requirement to waive that only for
+explicitly demo-seeded accounts is pending implementation. Device creation already stores only a secure
+digest and returns its key once; a future showcase must print newly created keys once after commit, never
+rotate/reveal existing keys on rerun, and keep credentials out of reports and saved evidence.

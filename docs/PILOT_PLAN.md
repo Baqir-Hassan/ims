@@ -1,8 +1,11 @@
 # Rumanza F&B pilot — plan
 
-**Status (2026-10-11): implemented.** Profiles in `backend/profiles/` and `frontend/profiles/`; pilot checks in
-`backend/tests/release/test_pilot_profile.py`; deployment steps in `docs/FNB_RELEASE.md` ("Rumanza F&B pilot").
-Also moved behind members during the work: the "Ordering Hours" screen (it sets member-app kitchen hours).
+**Status (2026-10-13): profile infrastructure and service B1-B6 implemented in source, with the split
+validation recorded in the phase reports.** B7 manager aggregates/reports are incomplete; B8 showcase and
+combined release-flow checks remain pending. This is not production or deployment sign-off. Profiles live
+in `backend/profiles/` and `frontend/profiles/`; existing pilot/upgrade checks live in
+`backend/tests/release/test_pilot_profile.py`; deployment steps are in `docs/FNB_RELEASE.md`.
+The member-app "Ordering Hours" screen is behind members; service venue hours remain outlet-owned.
 
 A hosted pilot for Rumanza, branded as Rykards and named "Inventory Management System" (`IMS_BRAND=rykards` in the frontend profile), so they can evaluate us. Rumanza's own ERP keeps members,
 membership verification, accounting and payroll. IMS covers:
@@ -26,10 +29,10 @@ invoices, receivables, member-app ordering, e-receipts, reservations, and On Cou
 
 Roles in the service pilot: **F&B Manager** (`manager`), **F&B Store** (`fnb_store_staff`), **Waiter** (`waiter`),
 **Cashier** (`cashier`), **Cook** (`cook`) and **Inventory lead** (`inventory_lead`). The last four work in one
-venue and declare PIN sign-in; a cook's station is added in service phase B3. Manager spans venues. Inventory
+venue and use device-bound PIN sign-in; a cook is assigned a station or the venue pass. Manager spans venues. Inventory
 leads confirm receipts for their own venue; store staff dispatch. See the shared service API contract.
 
-**Backend rollout status (2026-10-13): B1 roles and B2 authentication implemented.** `roles.consolidated` is on
+**Backend rollout status (2026-10-13): service B1-B6 implemented in source.** `roles.consolidated` is on
 in the backend pilot profile. The catalogue labels manager "F&B Manager" and marks kitchen_staff, fnb_manager,
 finance_staff and headstaff unassignable; POST/PATCH staff rejects assignment to these roles. Existing legacy
 accounts remain available until reassigned; run `python -m scripts.consolidate_roles` from backend to list them
@@ -40,15 +43,32 @@ venue staff PINs. Staff sessions expire after 12 hours; remembered personal pass
 First sign-in after a PIN reset requires a PIN change. Logout and device revocation end the affected sessions.
 The approved StaffUpdate email field permits moving PIN accounts to password roles with email and password.
 No migration has been run against the pilot public schema. Existing staff tokens require fresh sign-in when B2
-is deployed. Cook station assignment and the later floor/kitchen/till workflows remain pending from B3 onward;
-these authentication changes alone do not complete the service pilot. A venue role with no valid assignment
-is refused access by the existing scope helper. Phase verification is recorded in
-`backend/docs/SERVICE_REFERENCE_MAP.md`.
+is deployed. B3 owns floor layouts, menu/modifier projections, seats, held dishes and printed bills; B4 owns
+station/pass kitchen access, pickups, kitchen recall and cooked-void approval; B5 owns cashier payments and
+register shifts; B6 owns inventory-lead receipt confirmation, scoped stock/forecast/batches and pilot purchase
+thresholds. A venue role without a valid assignment is refused by the scope helper. B7 manager aggregates
+and reporting extensions remain incomplete, and the prototype-matching B8 seed is not implemented.
+Phase reports under `backend/docs/` and `SERVICE_REFERENCE_MAP.md` distinguish source, targeted testing and
+remaining release gates; B8 preparation is in `backend/docs/SERVICE_B8_REPORT.md`.
+
+Waiters order, hold/fire dishes, collect ready tickets and print bills; cashiers take venue payments, give
+within-limit checkout discounts and count/close registers. Station cooks can change only their station's
+tickets; pass cooks see every station in their venue. Kitchen-only Served-to-Preparing recall and shared
+Served-to-Ready pickup Undo require no recorded payment, including reversed payments. Inventory leads
+request, count and waste their venue stock and confirm its dispatched receipts; store staff dispatch and
+receive vendor deliveries. Managers provision staff/devices and decide approvals across venues.
+
+In the consolidated pilot, `second_approval_above` applies at or above the configured amount and requires
+two different eligible managers; the old separate `/finance-decision` purchase step returns 404. Below the
+threshold (or with a null threshold), one eligible manager can convert the request. The full profile keeps
+its existing optional Finance approval switch. Service source completion does not establish live deployment
+or an uninterrupted B9 suite result.
 
 ## 1. Members becomes optional (core + finance + outlets)
 
-Today finance, F&B inventory and F&B outlets list `members` as a dependency, so the API refuses to start
-without it.
+The implemented optional-module boundary lets the pilot start without members. Finance and outlets declare
+members as optional and load its extras only when enabled; inventory has no members dependency. The following
+rules describe that composition rather than an outstanding dependency-removal task.
 
 **Core** (`backend/app/core/registry.py`, `loader.py`; `frontend/app/core/modules.ts`, `registry.ts`):
 - `optional_depends_on` / `optionalDependsOn`: these control load order when the module is present and
@@ -156,8 +176,8 @@ Replace the shared "Cafe & Bar Kitchen" with one location per venue:
 **Members (verified in the ERP, no lookup in IMS)**
 - Customer type "Member": the cashier checks the member in the ERP, then enters the **membership number**
   and name. IMS stores them on the order (`cafe_orders.member_ref`, new) and does no verification.
-- Choosing "Member" sets `guest_type="Member"`. Today the till sends `customer_type` but **not**
-  `guest_type`, so this mapping is new.
+- Service order creation accepts `guest_type="Member"` with membership number and name. This records
+  identity checked outside IMS in the pilot; backend source does not prove frontend/browser acceptance.
 - **Member discount:** one % for all members, set by the Manager in POS setup on the existing "Member"
   guest type (`pos_guest_types.discount_percent`). As today, each line gets the single best of the
   guest-type % and any matching discount rule (happy hour etc.); they don't stack.
@@ -191,14 +211,16 @@ Replace the shared "Cafe & Bar Kitchen" with one location per venue:
   the frontend generator reads both at build time.
 - The demo seed works without members and payroll (no member rows, no payroll run; rosters and
   attendance are seeded).
-- Backend: `tests/release/test_pilot_profile.py` on an empty schema with the pilot settings:
-  - setup → vendor → PO → F&B Manager / Finance approval → GRN → bill → kitchen request per venue →
-    member and guest sales with member discount and checkout discount → KOT tickets → stock consumed from
-    the right venue → waste → count → costing / outlet P&L (no labour line);
-  - roster a week for kitchen staff per venue → staff clock in/out → F&B Manager confirms attendance;
-  - member, pay-rate, payroll-run, labour-cost, GL, tax, receivables, reservations and on-course routes
-    return 404, and the `payroll_run` approval policy is not listed.
-- The full suite with all modules still passes; `lint-imports` is green.
+- Existing backend checks in `tests/release/test_pilot_profile.py` cover disabled optional surfaces,
+  member-ref discounts, legacy-actor sales/KOT/stock, shift creation and same-schema member/full upgrade.
+  They do not yet prove B8's device/PIN waiter/cook/cashier flow, blind register close, correct lead receipt
+  or complete two-manager purchasing flow.
+- B8 must extend those actual tests on disposable schemas: device setup -> PIN sign-in -> order -> kitchen
+  tickets -> pickup -> printed bill -> cashier payment -> register close; lead request -> approval -> store
+  dispatch -> own-venue receipt; one/two-manager thresholds and full legacy compatibility; retained service
+  records after full upgrade. Optional members/payroll routes remain disabled in the pilot.
+- B9 requires a clean full suite in both profiles and passing import boundaries. Earlier targeted/split
+  phase results do not satisfy that gate.
 - Frontend: typecheck/lint/test for the full and pilot builds. A bundle test fails if members code is in
   the pilot build. Browser check of the pilot navigation for each role.
 
@@ -212,7 +234,7 @@ the API on the **same database**. These rules keep that route open.
 - **Unset enables defaults.** With `IMS_MODULES` / `IMS_FEATURES` unset, all modules and default features run exactly as
   today. CI runs both the full profile and the pilot profile, so the members-only and payroll paths don't
   rot while switched off.
-- **Deployment profiles.** `deploy/profiles/pilot.env` and `deploy/profiles/full.env` hold the
+- **Deployment profiles.** `backend/profiles/pilot.env` and `backend/profiles/full.env` hold the
   `IMS_MODULES` / `IMS_FEATURES` pairs. `render.yaml`, `wrangler.jsonc` and the release checks read a
   profile instead of hard-coding lists. Adding a module = editing one profile.
 - **One way to plug in.** New links between modules use `depends_on`, `optional_depends_on` +
@@ -225,10 +247,10 @@ the API on the **same database**. These rules keep that route open.
   modules' permissions work unchanged.
 
 ### 6.2 Deferred database steps must run when a module is switched on later
-Today `_fingerprint()` in `backend/app/core/db.py` hashes **only a module's own code**. If the pilot
-database later gets members, finance and outlets would not re-run, and their `when_enabled["members"]`
-steps (FKs, `collection_activity`) would never be applied.
-- Fix: a module's fingerprint also includes the sorted names of its `when_enabled` modules that are
+The implemented `_fingerprint()` in `backend/app/core/db.py` includes module code and applied optional
+extras/features. This allows deferred `when_enabled["members"]` steps (FKs, `collection_activity`) to run
+when the same pilot database is upgraded.
+- A module's fingerprint includes the sorted names of its `when_enabled` modules that are
   enabled, and its features that are enabled. Turning members (or `staff.payroll`) on then re-runs exactly
   the modules affected.
 - Deferred FKs are added `NOT VALID` and then validated, so existing pilot rows can't block startup.
@@ -245,7 +267,10 @@ steps (FKs, `collection_activity`) would never be applied.
 | E-receipts | Return with members (they are owned there). |
 
 ### 6.4 Proof: an upgrade test
-`tests/release/test_pilot_upgrade.py`:
+The existing test is `test_pilot_upgrades_to_the_full_product_on_the_same_database` in
+`backend/tests/release/test_pilot_profile.py`; the planned separate filename does not exist. B8 must extend
+that test to preserve service staff/devices/orders/stock/payment/close identities across the upgrade.
+The intended broader proof is:
 1. Boot the pilot profile on a fresh schema and run a short pilot flow (purchase, sale with `member_ref`,
    roster/attendance).
 2. Restart with the full profile on the **same schema**.
@@ -278,3 +303,17 @@ for the pilot are the same tools these modules use. The pilot work adds no throw
 4. Stock per venue (and the matching roster work locations).
 5. POS: member customer type + guest type, member ref, checkout discount, F&B tax setting.
 6. Deployment config, seed, pilot tests, the pilot → full upgrade test (§6.4), the member link step, docs.
+
+## B8 preparation and seed boundary (2026-10-13)
+
+The current `python -m scripts.seed` still runs the older showcase by default; `--no-showcase` requests
+basic demo data, and an explicit service `--showcase` flag is not implemented. Do not run these commands
+on pilot/public data. B8 inspection found incomplete B7 reporting and prototype examples without complete
+backend relationships; `backend/docs/SERVICE_B8_REPORT.md` and `SERVICE_B8_SHOWCASE_MAP.md` record the
+prerequisite, mapping, pending decisions and intended rerun/security checks. No service showcase, generated
+device keys, disposable-schema workflow run, production migration or B9 sign-off is claimed by this preparation.
+
+Normal staff PIN creation/reset still requires a PIN change. The B8 requirement to waive that only for
+explicitly demo-seeded accounts is pending implementation. Device creation already stores only a secure
+digest and returns its key once; a future showcase must print newly created keys once after commit, never
+rotate/reveal existing keys on rerun, and keep credentials out of reports and saved evidence.

@@ -1,0 +1,6 @@
+{
+  "includeIgnored": [
+    "backend/",
+    "frontend/"
+  ]
+}

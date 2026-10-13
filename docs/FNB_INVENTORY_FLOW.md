@@ -2,11 +2,11 @@
 
 ```mermaid
 flowchart LR
-    Kitchen[Kitchen staff] -->|Request ingredients| Request[Kitchen request]
+    Kitchen[Venue inventory lead; full also retains legacy kitchen staff] -->|Request ingredients| Request[Kitchen request]
     Request -->|Approve quantities| Manager[F&B Manager]
     Manager -->|Approved request| Store[F&B Store]
     Store -->|Dispatch at average cost| Transit[Stock in transit]
-    Transit -->|Confirm actual receipt| KitchenStock[Venue kitchen stock]
+    Transit -->|Own venue inventory lead confirms actual receipt| KitchenStock[Venue kitchen stock]
     Transit -->|Shortfall with reason| Loss[Transit loss]
     KitchenStock -->|Prepared sales or waste| Movement[Costed ingredient movements]
     Loss --> Movement
@@ -18,9 +18,12 @@ flowchart LR
 flowchart LR
     Store[F&B Store] --> PR[Vendor purchase request]
     PR --> Manager[F&B Manager decision]
-    Manager -->|Finance toggle off| PO[Approved purchase order]
-    Manager -->|Finance toggle on| Queue[Awaiting Finance]
-    Queue -->|Approve| PO
+    Manager -->|Pilot below threshold or null threshold| PO[Approved purchase order]
+    Manager -->|Pilot at or above threshold| Second[Awaiting second approval]
+    Second -->|Different eligible F&B Manager| PO
+    Manager -->|Full profile: Finance toggle off| PO
+    Manager -->|Full profile: Finance toggle on| Queue[Awaiting Finance]
+    Queue -->|Legacy Finance approval| PO
     PO --> GRN[Finance goods-received service]
     GRN --> Handler[Registered ingredient handler]
     Handler --> Stock[Store stock and weighted-average cost]
@@ -29,6 +32,24 @@ flowchart LR
     Bill --> Payables[Finance matching and payment]
 ```
 
-Each venue consumes ingredients from its own stock location: Indoor Cafe (and On Course) from the Indoor Cafe Kitchen, Rooftop from the Rooftop Kitchen, Bar from the Bar. Reversals restore the original location. Valuation reconciles to Store 1210, transit 1215, Cafe & Bar 1220 and Rooftop 1230. Waste and transit loss post to 6160; food and beverage consumption post to 5210 and 5220.
+Each venue consumes ingredients from its own stock location: Indoor Cafe (and On Course) from the Indoor Cafe Kitchen, Rooftop from the Rooftop Kitchen, Bar from the Bar. Reversals restore the original location. Valuation reconciles to Store 1210, transit 1215, Indoor Cafe 1220, Rooftop 1230 and Bar 1240. Waste and transit loss post to 6160; food and beverage consumption post to 5210 and 5220.
 
-The backend depends only on core, members, finance and catalog. It consumes sales-line and labour-cost registries, keeping outlet and payroll dependencies in the direction required by the deployment plan. The frontend adds its Finance approval panel through core's registry; Finance does not import inventory.
+The inventory module depends on core, finance and catalog; members is not required. It consumes sales-line and labour-cost registries, keeping outlet and payroll dependencies in the direction required by the deployment plan. The frontend adds its Finance approval panel through core's registry; Finance does not import inventory.
+
+In the consolidated pilot (`roles.consolidated`), inventory leads request, withdraw, count and waste their
+own venue stock, and `fnb.receive` authorizes receipt confirmation only at that venue. They may read scoped
+stock values and forecast/overview/batches; this grants no club-wide purchasing or Finance reports. Store
+staff raise purchases, receive vendor deliveries and dispatch approved kitchen requests; managers decide
+requests across venues. The purchase setting is `second_approval_above`, compared in whole paisa at/above
+its stored two-decimal threshold. The first approver cannot give the second approval. The old separate
+`/fnb/purchase-requests/{id}/finance-decision` returns 404 in the pilot; full preserves the legacy switch.
+
+Inventory owns weighted-average costing and movement/batch provenance. Finance owns POs, GRNs and vendor
+bills and calls inventory's registered receiving handler. Transfers carry receipt expiry into request-specific
+transit lots, then the receiving kitchen; counts/waste/consumption deplete FIFO lots, with proven sale-reversal
+restoration. No expiry is invented for unbatched opening stock or positive count corrections.
+
+B6 source and split verification are in `backend/docs/SERVICE_B6_REPORT.md`. B7 purchase dashboard/transfers,
+received-value bill settlement and new exception kinds remain incomplete in the inspected checkout. B8
+showcase/profile-flow validation is pending; its mapping and prerequisite findings are in
+`backend/docs/SERVICE_B8_REPORT.md`. These flows do not establish deployment readiness or B9 sign-off.

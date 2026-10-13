@@ -136,6 +136,11 @@ walk-up sessions, PIN change gating, password sign-in refused for PIN roles, rem
 - Owner-approved pickup Undo (2026-10-13): `Served→Ready` before payment, with the same venue/station checks;
   recompute order readiness without repeating stock consumption. Cancelled orders or orders with any recorded
   payment refuse Undo. Held lines prevent automatic order completion until fired.
+- Owner-approved served-ticket kitchen recall (2026-10-13): `Served→Preparing` for `outlets.kitchen` only,
+  with existing venue/station checks, cancellation wording and any-recorded-payment refusal (including reversal).
+  Lock order, then ticket, before payment check; reuse `Ready→Preparing` timestamps and Undo order recomputation.
+  Preserve `done`; no inventory consumption/restoration, print job, slip or alert; retain status live events/audit.
+  Full/pilot recall tests and pre-B7 source answers are in the B4 report addendum. Wait for owner go-ahead before B7.
 - `PATCH /kot/tickets/{id}/lines/{order_line_id}` `{done}` → sets/clears `kot_ticket_lines.done_at`; announce `kot`.
 - **Cooked voids:** in the line-cancel paths (`remove_order_line`, `cancel_order_line_now`), when the line's ticket
   is Preparing or Ready, gate through a new `ApprovalPolicy("pos_cooked_void", ...)` (approvers: `manager`) with an
@@ -170,9 +175,11 @@ walk-up sessions, PIN change gating, password sign-in refused for PIN roles, rem
   `GET /fnb/overview` (contract §6) in one query set per call.
 - `GET /fnb/forecast` (contract §6): 14-day average use from net consumption movements; `next_delivery_at` from open
   requests. Requests accept optional `needed_by` as an ISO timestamp including timezone; undated legacy requests remain valid.
-- **Batches:** `ingredient_batches` records received quantity only. Add `remaining REAL` (backfill = `quantity`
-  minus later consumption, or simply `quantity` for batches newer than the oldest stock; document the choice) and
-  deplete it first-in-first-out on dispatch, consumption and waste at that location. `GET /fnb/batches/expiring`.
+- **Batches:** add `remaining REAL`. Legacy NULL balances are bounded by present positive location stock,
+  reserving known remaining and assigning the balance to newest receipts first (older receipts take inferred depletion).
+  Do not invent expiry for unbatched history. Deplete first-in-first-out on dispatch, consumption and waste,
+  preserve receipt expiry through requisition-specific transit into the kitchen, and restore proven cancelled-sale lots.
+  `GET /fnb/batches/expiring`.
 - **Purchase threshold:** `fnb_settings.second_approval_above` replaces `finance_approval_required` under
   `roles.consolidated`. `decide_purchase_request`: at or above the threshold, the first approval sets
   `Awaiting second approval`; the second uses `require_second_person` (already in core) and raises the PO. With the
@@ -180,7 +187,16 @@ walk-up sessions, PIN change gating, password sign-in refused for PIN roles, rem
 - Announce a new `stock` topic (declare in the inventory manifest) on request decisions, dispatch, receipt, GRNs,
   waste and counts.
 
+B6 is complete in source; full/pilot and inventory regression evidence, contract clarifications and
+frontend handoff are in `../backend/docs/SERVICE_B6_REPORT.md`. Live integration and release gates remain B9.
+
 ## B7. F&B Manager aggregates and reports
+
+Prerequisite check (2026-10-13): B7 is incomplete in the inspected checkout. There is no
+`backend/docs/SERVICE_B7_REPORT.md` or dedicated B7 test/evidence set, and the new B7 endpoint/report
+extensions are absent. B8 dependent showcase/report workflows must wait for verified B7 completion
+and owner direction. Findings and independent B8 preparation are recorded in
+`../backend/docs/SERVICE_B8_REPORT.md`; this check does not implement B7.
 
 - `GET /cafe/venues/live` (outlets).
 - `GET /finance/daily-summary`: add `hours` (net by hour from payments' revenue rows) and `checkout_discounts`.
@@ -193,6 +209,10 @@ walk-up sessions, PIN change gating, password sign-in refused for PIN roles, rem
 
 ## B8. Seed, profiles, docs
 
+Status (2026-10-13): independent documentation and source-to-seed mapping prepared; B8 implementation
+and seed/profile/release-flow validation remain incomplete. B7 is the outstanding prerequisite.
+See `../backend/docs/SERVICE_B8_REPORT.md` and `../backend/docs/SERVICE_B8_SHOWCASE_MAP.md`.
+
 - **Demo data must reproduce the prototype's**, because the frontend checks every screen side by side against it:
   the same venues, tables (codes, seats, shapes, positions, zones and floor features from `TABLES`/`DECOR`), stations
   and section mapping (`STATIONS`), menu items with prices, descriptions and modifier groups (`MENU_RAW`, `MODS`),
@@ -204,11 +224,14 @@ walk-up sessions, PIN change gating, password sign-in refused for PIN roles, rem
   Danish waiters; Nimra, Fahad, Saad cashiers; Naveed BBQ, Imran Pakistani, Adeel Chinese, Saima pass, Rafay, Tariq,
   Bilal cooks; Faisal, Mehwish, Kamran inventory leads), demo PIN `1357` with `pin_must_change = 0` in the demo seed
   only, the demo floor layout, and two demo devices whose keys print to the console once.
-- `profiles/pilot.env`: add `roles.consolidated`. Release checks in `tests/release/test_pilot_profile.py`: the old
+- `profiles/pilot.env` already selects `roles.consolidated` alongside the four existing pilot features;
+  preserve it without duplication. Release checks in `tests/release/test_pilot_profile.py`: the old
   roles are not assignable; the Finance purchase step returns 404; a full pilot flow runs with the new roles
   (device set-up → PIN sign-in → order → tickets → pickup → bill → payment → register close; kitchen request →
   approval → dispatch → receipt by the inventory lead; purchase above the threshold needs two managers).
-- `tests/release/test_pilot_upgrade.py` still passes: the full profile restores the old roles' screens.
+- Extend `test_pilot_upgrades_to_the_full_product_on_the_same_database` in
+  `tests/release/test_pilot_profile.py` (there is no `test_pilot_upgrade.py` in this checkout): restore
+  the full legacy surface and retain pilot service data. B8 upgrade evidence remains pending.
 - Update `API_COVERAGE.md`, `ARCHITECTURE.md` (Role `sign_in`, sessions/devices in core, `staff_extras` hook,
   `roles.consolidated`), `docs/FNB_DFD.md`, `docs/FNB_INVENTORY_FLOW.md` (inventory lead confirms receipts;
   threshold instead of Finance), `docs/PILOT_PLAN.md` roles list.

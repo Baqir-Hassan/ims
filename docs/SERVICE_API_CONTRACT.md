@@ -269,6 +269,7 @@ live ticket is Served and no uncancelled held line remains (it stays unpaid unti
 Owner-approved pickup Undo permits `Served → Ready` for `outlets.order` and `outlets.kitchen`, with the same
 venue/station checks. Cancelled orders refuse Undo; an order with any recorded payment returns **409**
 `"Payments are already taken. Ask the cashier."`. Undo recomputes order readiness and does not repeat stock consumption.
+The kitchen may also recall a served ticket to Preparing before any payment, under the rules in section 4.
 
 ## 4. Kitchen: cooks (`outlets.kitchen` = `cook`, `manager`)
 
@@ -277,8 +278,19 @@ KOT contract endpoints, with these changes:
 - `GET /kot/tickets` for a `cook`: the venue is the account's venue; a station cook always gets only their station
   (`station_id` in the query is ignored); a pass cook (`station_id: null`) gets every station and may filter.
 - `PATCH /kot/tickets/{id}/status` transitions: `Placed→Preparing`, `Preparing→Ready`, **`Ready→Preparing`** (recall,
-  new), **`Ready→Served`** (new), **`Served→Ready`** (pickup Undo before payment). A station cook may only change their station's tickets → **403**
+  new), **`Ready→Served`** (new), **`Served→Ready`** (pickup Undo before payment), and **`Served→Preparing`** (kitchen recall before payment).
+  A station cook may only change their station's tickets → **403**
   `"That ticket belongs to <station>."`
+- `Served→Preparing` requires `outlets.kitchen` (`cook`, `manager`, and the group's legacy roles);
+  waiters/cashiers get **403**. Venue confinement is unchanged; pass cooks may recall any station in their venue.
+  Cancelled tickets/orders return **409** with the existing invalid-transition/Undo wording. Any recorded payment,
+  including partial, full or later reversed payments, returns **409** `"Payments are already taken. Ask the cashier."`.
+  Lock the order, then the ticket, before checking payments, as for Undo. Return the same updated `Ticket`;
+  reuse `Ready→Preparing` timestamp handling (`accepted_at` retained/set, `ready_at` cleared), and clear a served
+  timestamp if present (the current ticket schema has none). Keep line `done` flags. Recompute order state using
+  the pickup Undo helper: Served only when every live ticket is Served and no uncancelled held line remains.
+  Recall never consumes/restores stock or creates a print job, slip or alert; retain status-change live topics
+  and audit. Existing `Placed→Preparing` and `Ready→Preparing` remain valid; repeated `Preparing→Preparing` is invalid.
 - Crossing off lines is shared between screens:
 
 | Method | Path | Body | Returns |
@@ -482,6 +494,9 @@ Existing topics (`orders`, `reservations`, `kot`) keep working. New:
   (inventory screens refresh on it).
 
 ## Changelog
+- 2026-10-13 (approved by owner): added kitchen recall `Served→Preparing` with kitchen-only permission,
+  venue/station checks, any-recorded-payment and cancellation guards, order-before-payment locking,
+  Undo order-state recomputation, retained line flags/timestamps, no stock/print/slip/alert changes, and existing events/audit.
 - 2026-10-13 (approved by owner): added pickup Undo `Served → Ready` with venue/station confinement,
   cancellation/payment guards and order-state recomputation; held lines prevent automatic order completion.
 
