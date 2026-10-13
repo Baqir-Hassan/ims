@@ -65,7 +65,7 @@ asked / approved (trimmed) / dispatched / received quantities with the short-rec
   `Received`, `Received with variance`, `Rejected`, `Withdrawn`?), and whether `GET /fnb/kitchen-requests` for a
   lead needs the `kitchen` parameter or defaults to its own location.
 - Request fields needed: `id`, `number`, `kitchen`, `status`, `needed_by` (ISO, echoed back), `remarks`,
-  `requested_by_name`, `requested_at`, `decided_by_name`, `decided_at`, `decision_note`, `dispatched_by_name`,
+  `requested_by_name`, `requested_at`, `approved_by_name`, `approved_at` (the existing names the store screen already reads), `decision_note`, `dispatched_by_name`,
   `dispatched_at`, `dispatch_note` (the storekeeper's note when sending, e.g. "Chicken boneless short by 0.5 kg at the store"; the
   drawer shows it next to the F&B Manager's note), `received_by_name`, `received_at`, and a request `value` (Rs at average cost), plus per line
   `id`, `ingredient_id`, `name`, `unit`, `requested_qty`, `approved_qty`, `dispatched_qty`, `received_qty`,
