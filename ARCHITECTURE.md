@@ -99,7 +99,7 @@ manager's self-clock and roster eligibility. Password login rejects PIN roles wi
 
 B2 provisioning/devices/sessions and B3 station assignments are implemented as described below. B4-B6
 kitchen, till and inventory work is implemented in source with phase-specific targeted evidence.
-B7 and B8 remain incomplete; the service pilot has not completed B9 or live release acceptance.
+B7 is implemented and B8 operational histories remain incomplete; the service pilot has not completed B9 or live release acceptance.
 
 
 ## Service authentication (B2, 2026-10-13)
@@ -225,16 +225,47 @@ explicit department settlement. Existing captured zero settlements/refund histor
 
 B6 inventory owns batch quantity/provenance and keeps weighted-average costing/journals. Finance retains PO, GRN and vendor-bill services. Pilot second-manager decisions serialize on the requisition row; ingredient mutations take ingredient locks before location/batch locks. Generic core service_openings projects outlets-owned opening hours to inventory without an import dependency or cross-table read. The inventory manifest owns the stock live topic. See backend/docs/SERVICE_B6_REPORT.md.
 
-## B8 preparation and seed boundary (2026-10-13)
+## B8 independent seed boundary (2026-10-13)
 
-The current `python -m scripts.seed` still runs the older showcase by default; `--no-showcase` requests
-basic demo data, and an explicit service `--showcase` flag is not implemented. Do not run these commands
-on pilot/public data. B8 inspection found incomplete B7 reporting and prototype examples without complete
-backend relationships; `backend/docs/SERVICE_B8_REPORT.md` and `SERVICE_B8_SHOWCASE_MAP.md` record the
-prerequisite, mapping, pending decisions and intended rerun/security checks. No service showcase, generated
-device keys, disposable-schema workflow run, production migration or B9 sign-off is claimed by this preparation.
+`python -m scripts.seed --showcase --now <timezone-aware-ISO>` creates the independent prototype foundation
+on a fresh development database: exact static data/opening stock, service staff and all six owner-authorized
+devices. No-flag usage retains older showcase; `--no-showcase` selects basic demo. New mode disables inherited
+legacy demos, refuses populated unmarked/deployed targets, commits as one transaction and prints only new
+keys after commit. Matching reruns preserve credentials, revoked devices, times and identities. Secrets
+are absent from metadata/reports. Demo-only hashed PIN 1357 waives first change; ordinary creation/reset
+still requires it.
 
-Normal staff PIN creation/reset still requires a PIN change. The B8 requirement to waive that only for
-explicitly demo-seeded accounts is pending implementation. Device creation already stores only a secure
-digest and returns its key once; a future showcase must print newly created keys once after commit, never
-rotate/reveal existing keys on rerun, and keep credentials out of reports and saved evidence.
+`backend/docs/SERVICE_B8_REPORT.md` records focused full/pilot checks, actual upgrade retention evidence and
+pending scope. B7 endpoints are implemented; operational showcase histories and dependent fixture validation remain pending; empty-recipe unlimited
+ordering and exact foundation modifier scoping across upgrade need decisions. No pilot/public seed,
+deployment or B9 sign-off. Exact command/guards in that report apply only to fresh development targets.
+
+Pre-B7 F6 additions (scoped lead count submission/discard, waste cost/note, ingredient use/cost, request
+timeline and movement references): `backend/docs/SERVICE_PRE_B7_ANSWERS.md`, shared contract section 6.
+Approved discard retains history without stock or journal changes.
+
+Stock document references use generic `Registry.sale_references` providers keyed by sale source. Outlets
+owns bounded cafe/on-course order-code lookups; inventory calls providers without importing outlet tables.
+
+B7 continuation (2026-10-13): manager venue/payment-hour, discount/void and purchase/transfer reports,
+untaxed received-value settlement and owner-provided exception feeds are implemented. Full/pilot evidence
+and limitations: `backend/docs/SERVICE_B7_REPORT.md`; shared contract section 8 records exact semantics.
+No deployment, public migration/seed or B9 acceptance is inferred from these checks.
+
+
+### Service continuation ownership (2026-10-13)
+
+Core supplies optional context-local `transaction_scope(database)` and `reference_clock(moment)` for
+atomic deterministic offline workflow seeds. Normal connections/clock behavior is unchanged outside
+those explicit scopes. Core imports no business module. The generic workbook service lives in core;
+inventory's existing import path re-exports it for compatibility. Export routes stay with their owners.
+
+Inventory owns usual ingredient supplier/perishable metadata, receipt/FIFO projection, entered recipe
+overhead estimates and explicit-empty-recipe lookup. Outlets consumes that public lookup through its
+stock adapter. Modern modifier group scopes remain declared scopes across schema reapplication.
+Finance owns department-confined receipt access, accepted-value addition and supplier fill metrics.
+Outlets contributes historical payment attribution and order metadata through the existing registry.
+Payroll owns editable roster times and the existing overlap/attendance/payroll guards. Scripts own
+source-hashed operational showcase translation and versioned, no-secret identity markers.
+
+Final continuation interface/evidence: backend/docs/SERVICE_FRONTEND_HANDOFF.md, SERVICE_B9_COVERAGE.md and SERVICE_B9_REPORT.md. No frontend ownership or deployment acceptance is implied by the automated backend checks.

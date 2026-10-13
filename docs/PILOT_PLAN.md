@@ -1,7 +1,7 @@
 # Rumanza F&B pilot — plan
 
 **Status (2026-10-13): profile infrastructure and service B1-B6 implemented in source, with the split
-validation recorded in the phase reports.** B7 manager aggregates/reports are incomplete; B8 showcase and
+validation recorded in the phase reports.** B7 manager aggregates/reports are implemented with focused checks; B8 showcase and
 combined release-flow checks remain pending. This is not production or deployment sign-off. Profiles live
 in `backend/profiles/` and `frontend/profiles/`; existing pilot/upgrade checks live in
 `backend/tests/release/test_pilot_profile.py`; deployment steps are in `docs/FNB_RELEASE.md`.
@@ -47,15 +47,16 @@ is deployed. B3 owns floor layouts, menu/modifier projections, seats, held dishe
 station/pass kitchen access, pickups, kitchen recall and cooked-void approval; B5 owns cashier payments and
 register shifts; B6 owns inventory-lead receipt confirmation, scoped stock/forecast/batches and pilot purchase
 thresholds. A venue role without a valid assignment is refused by the scope helper. B7 manager aggregates
-and reporting extensions remain incomplete, and the prototype-matching B8 seed is not implemented.
+and reporting extensions are now implemented with focused checks. B8 static foundation is implemented; operational histories
+and the complete prototype showcase remain pending.
 Phase reports under `backend/docs/` and `SERVICE_REFERENCE_MAP.md` distinguish source, targeted testing and
-remaining release gates; B8 preparation is in `backend/docs/SERVICE_B8_REPORT.md`.
+remaining release gates; B8 current foundation status is in `backend/docs/SERVICE_B8_REPORT.md`.
 
 Waiters order, hold/fire dishes, collect ready tickets and print bills; cashiers take venue payments, give
 within-limit checkout discounts and count/close registers. Station cooks can change only their station's
 tickets; pass cooks see every station in their venue. Kitchen-only Served-to-Preparing recall and shared
 Served-to-Ready pickup Undo require no recorded payment, including reversed payments. Inventory leads
-request, count and waste their venue stock and confirm its dispatched receipts; store staff dispatch and
+request, save/submit/discard counts and waste their venue stock and confirm dispatched receipts; store staff dispatch and
 receive vendor deliveries. Managers provision staff/devices and decide approvals across venues.
 
 In the consolidated pilot, `second_approval_above` applies at or above the configured amount and requires
@@ -268,8 +269,8 @@ when the same pilot database is upgraded.
 
 ### 6.4 Proof: an upgrade test
 The existing test is `test_pilot_upgrades_to_the_full_product_on_the_same_database` in
-`backend/tests/release/test_pilot_profile.py`; the planned separate filename does not exist. B8 must extend
-that test to preserve service staff/devices/orders/stock/payment/close identities across the upgrade.
+`backend/tests/release/test_pilot_profile.py`; the planned separate filename does not exist. B8 extends it to preserve a service device/key, changed staff PIN, order total and ticket identity.
+Exact foundation modifier scoping and broader stock/payment/close identities remain pending.
 The intended broader proof is:
 1. Boot the pilot profile on a fresh schema and run a short pilot flow (purchase, sale with `member_ref`,
    roster/attendance).
@@ -304,16 +305,26 @@ for the pilot are the same tools these modules use. The pilot work adds no throw
 5. POS: member customer type + guest type, member ref, checkout discount, F&B tax setting.
 6. Deployment config, seed, pilot tests, the pilot → full upgrade test (§6.4), the member link step, docs.
 
-## B8 preparation and seed boundary (2026-10-13)
+## B8 independent seed boundary (2026-10-13)
 
-The current `python -m scripts.seed` still runs the older showcase by default; `--no-showcase` requests
-basic demo data, and an explicit service `--showcase` flag is not implemented. Do not run these commands
-on pilot/public data. B8 inspection found incomplete B7 reporting and prototype examples without complete
-backend relationships; `backend/docs/SERVICE_B8_REPORT.md` and `SERVICE_B8_SHOWCASE_MAP.md` record the
-prerequisite, mapping, pending decisions and intended rerun/security checks. No service showcase, generated
-device keys, disposable-schema workflow run, production migration or B9 sign-off is claimed by this preparation.
+`python -m scripts.seed --showcase --now <timezone-aware-ISO>` creates the independent prototype foundation
+on a fresh development database: exact static data/opening stock, service staff and all six owner-authorized
+devices. No-flag usage retains older showcase; `--no-showcase` selects basic demo. New mode disables inherited
+legacy demos, refuses populated unmarked/deployed targets, commits as one transaction and prints only new
+keys after commit. Matching reruns preserve credentials, revoked devices, times and identities. Secrets
+are absent from metadata/reports. Demo-only hashed PIN 1357 waives first change; ordinary creation/reset
+still requires it.
 
-Normal staff PIN creation/reset still requires a PIN change. The B8 requirement to waive that only for
-explicitly demo-seeded accounts is pending implementation. Device creation already stores only a secure
-digest and returns its key once; a future showcase must print newly created keys once after commit, never
-rotate/reveal existing keys on rerun, and keep credentials out of reports and saved evidence.
+`backend/docs/SERVICE_B8_REPORT.md` records focused full/pilot checks, actual upgrade retention evidence and
+pending scope. B7 endpoints are implemented; operational showcase histories and dependent fixture validation remain pending; empty-recipe unlimited
+ordering and exact foundation modifier scoping across upgrade need decisions. No pilot/public seed,
+deployment or B9 sign-off. Exact command/guards in that report apply only to fresh development targets.
+
+Pre-B7 F6 additions (scoped lead count submission/discard, waste cost/note, ingredient use/cost, request
+timeline and movement references): `backend/docs/SERVICE_PRE_B7_ANSWERS.md`, shared contract section 6.
+Approved discard retains history without stock or journal changes.
+
+B7 continuation (2026-10-13): manager venue/payment-hour, discount/void and purchase/transfer reports,
+untaxed received-value settlement and owner-provided exception feeds are implemented. Full/pilot evidence
+and limitations: `backend/docs/SERVICE_B7_REPORT.md`; shared contract section 8 records exact semantics.
+No deployment, public migration/seed or B9 acceptance is inferred from these checks.

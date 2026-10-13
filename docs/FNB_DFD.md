@@ -2,7 +2,7 @@
 
 The full profile includes F&B, catalog, members/accounts, finance and F&B payroll/shifts. The service pilot
 loads catalog, finance, inventory, outlets and shifts; members, payroll and their optional extras are disabled.
-Consolidation is opt-in in full and selected in pilot. B1-B6 are implemented in source; B7 and B8 remain
+Consolidation is opt-in in full and selected in pilot. B1-B6 are implemented in source; B7 is implemented; B8 operational showcase remains
 incomplete, and B9/deployment acceptance is pending. Golf, academy and pro shop are absent.
 
 ## Context (level 0)
@@ -90,4 +90,13 @@ The release smoke checks these balances against source records. DFDs describe th
 B8 showcase preparation and unresolved prototype relationships are documented in
 `backend/docs/SERVICE_B8_REPORT.md` and `SERVICE_B8_SHOWCASE_MAP.md`. The diagrams describe implemented
 B1-B6 responsibilities and optional full-profile flows; they do not claim the B7 aggregate/report work,
-service showcase seeding, live server/database deployment or physical printing has passed acceptance.
+complete operational showcase seeding, live server/database deployment or physical printing has passed acceptance.
+
+B8 independent foundation reconciles opening stock through inventory/Finance owners. F6 lead count
+posting retains count/GL ownership; Discarded creates no movement/journal. Sale references use generic
+`sale_references` with selling-module providers.
+
+B7 continuation (2026-10-13): manager venue/payment-hour, discount/void and purchase/transfer reports,
+untaxed received-value settlement and owner-provided exception feeds are implemented. Full/pilot evidence
+and limitations: `backend/docs/SERVICE_B7_REPORT.md`; shared contract section 8 records exact semantics.
+No deployment, public migration/seed or B9 acceptance is inferred from these checks.

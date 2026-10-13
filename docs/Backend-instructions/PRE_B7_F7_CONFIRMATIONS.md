@@ -86,3 +86,19 @@ location}` (`batch_no` may be null for unbatched stock?).
 ## Report back
 Add an "F7 confirmations" section to the same answer file: per numbered item, what the source does today, what you added (with
 test names), and anything left for the owner to decide. Contract and changelog edits go in the same change as the code.
+
+
+## Backend continuation confirmation — 2026-10-13
+
+Current source now supports department-confined Store receipt-list read, explicit usual supplier and FIFO
+next-batch enquiry data, nullable perishable metadata, aware expected_delivery_at request-to-PO retention,
+and top-level grn_code alongside the nested response. Existing trimmed dispatch quantity/note support is
+confirmed and finite quantity validation added. Preserve arrived=accepted+rejected on receipt input and
+legacy arrived header value; accepted_received_value supplies the net value.
+
+The owner confirmed expiry at the start of the stated date, midnight Asia/Karachi, **warnings only** with
+existing dispatch/consumption behavior. Explicit empty recipes are unlimited. Entered recipe overhead is
+a percentage of whole-recipe ingredient cost; it is not an implicit8% or a historical stock/ledger charge.
+Exact fields, permissions, errors and compatibility: ../SERVICE_API_CONTRACT.md. Full frontend handoff:
+../../backend/docs/SERVICE_FRONTEND_HANDOFF.md. Current validation: ../../backend/docs/SERVICE_B9_REPORT.md.
+Historical missing observations above do not describe these additive current interfaces.

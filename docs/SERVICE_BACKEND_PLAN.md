@@ -190,13 +190,16 @@ walk-up sessions, PIN change gating, password sign-in refused for PIN roles, rem
 B6 is complete in source; full/pilot and inventory regression evidence, contract clarifications and
 frontend handoff are in `../backend/docs/SERVICE_B6_REPORT.md`. Live integration and release gates remain B9.
 
+Pre-B7 F6 extension (2026-10-13): scoped lead count submission, retained-history discard, waste cost/note,
+all-ingredient daily use/references, request value/timeline/dispatch note. Interfaces and unchanged behavior:
+shared contract section 6 and `../backend/docs/SERVICE_PRE_B7_ANSWERS.md`.
+
 ## B7. F&B Manager aggregates and reports
 
-Prerequisite check (2026-10-13): B7 is incomplete in the inspected checkout. There is no
-`backend/docs/SERVICE_B7_REPORT.md` or dedicated B7 test/evidence set, and the new B7 endpoint/report
-extensions are absent. B8 dependent showcase/report workflows must wait for verified B7 completion
-and owner direction. Findings and independent B8 preparation are recorded in
-`../backend/docs/SERVICE_B8_REPORT.md`; this check does not implement B7.
+Status (2026-10-13): B7 implemented with full/pilot focused validation. Owner authorized this phase after
+B8 independent work. Untaxed-only received-value settlement is the owner's selected rule; taxed invoices
+remain unchanged with 422. Exact interfaces, evidence and limits: `../backend/docs/SERVICE_B7_REPORT.md`
+and shared contract section 8. B8 operational histories are now implemented; current B9 evidence is recorded separately.
 
 - `GET /cafe/venues/live` (outlets).
 - `GET /finance/daily-summary`: add `hours` (net by hour from payments' revenue rows) and `checkout_discounts`.
@@ -209,8 +212,10 @@ and owner direction. Findings and independent B8 preparation are recorded in
 
 ## B8. Seed, profiles, docs
 
-Status (2026-10-13): independent documentation and source-to-seed mapping prepared; B8 implementation
-and seed/profile/release-flow validation remain incomplete. B7 is the outstanding prerequisite.
+Status (2026-10-13 continuation): foundation and operational histories implemented through real owners.
+Contradictory prototype totals remain documented evidence rather than fabricated financial rows. Empty
+recipe availability and foundation modifier scoping are resolved. Final validation/cleanup status is
+recorded in the B9 report; exact pixel/financial reproduction is not claimed.
 See `../backend/docs/SERVICE_B8_REPORT.md` and `../backend/docs/SERVICE_B8_SHOWCASE_MAP.md`.
 
 - **Demo data must reproduce the prototype's**, because the frontend checks every screen side by side against it:
@@ -223,7 +228,7 @@ See `../backend/docs/SERVICE_B8_REPORT.md` and `../backend/docs/SERVICE_B8_SHOWC
 - `scripts/seed.py` / module seeds: one account per new role per venue matching the prototype (Hamza, Areeba,
   Danish waiters; Nimra, Fahad, Saad cashiers; Naveed BBQ, Imran Pakistani, Adeel Chinese, Saima pass, Rafay, Tariq,
   Bilal cooks; Faisal, Mehwish, Kamran inventory leads), demo PIN `1357` with `pin_must_change = 0` in the demo seed
-  only, the demo floor layout, and two demo devices whose keys print to the console once.
+  only, the demo floor layout, and all six prototype devices (owner direction), whose new keys print once after commit.
 - `profiles/pilot.env` already selects `roles.consolidated` alongside the four existing pilot features;
   preserve it without duplication. Release checks in `tests/release/test_pilot_profile.py`: the old
   roles are not assignable; the Finance purchase step returns 404; a full pilot flow runs with the new roles
@@ -231,12 +236,18 @@ See `../backend/docs/SERVICE_B8_REPORT.md` and `../backend/docs/SERVICE_B8_SHOWC
   approval → dispatch → receipt by the inventory lead; purchase above the threshold needs two managers).
 - Extend `test_pilot_upgrades_to_the_full_product_on_the_same_database` in
   `tests/release/test_pilot_profile.py` (there is no `test_pilot_upgrade.py` in this checkout): restore
-  the full legacy surface and retain pilot service data. B8 upgrade evidence remains pending.
+  the full legacy surface and retain pilot service data. The actual operational foundation upgrade now checks scoped modifier links, all six devices, identities and remaining batches.
 - Update `API_COVERAGE.md`, `ARCHITECTURE.md` (Role `sign_in`, sessions/devices in core, `staff_extras` hook,
   `roles.consolidated`), `docs/FNB_DFD.md`, `docs/FNB_INVENTORY_FLOW.md` (inventory lead confirms receipts;
   threshold instead of Finance), `docs/PILOT_PLAN.md` roles list.
 
 ## B9. Checks
+
+Status: B9 automated backend complete on frozen source (full339/pilot338; owned test database cleaned).
+Automated backend evidence: `../backend/docs/SERVICE_B9_REPORT.md`; endpoint/error mapping:
+`../backend/docs/SERVICE_B9_COVERAGE.md`. Browser, physical printer/device and deployment acceptance
+remain separate gates. Exact additive frontend fields and remaining decisions:
+`../backend/docs/SERVICE_FRONTEND_HANDOFF.md`.
 
 - `lint-imports`; the full suite in both profiles (run module folders as parallel processes, see the preview notes).
 - Every contract endpoint has a test, including each listed error message and `code`.
@@ -247,3 +258,10 @@ See `../backend/docs/SERVICE_B8_REPORT.md` and `../backend/docs/SERVICE_B8_SHOWC
 
 About 20–27 developer days: B1 5, B2 3, B3 3, B4 2, B5 2, B6 3, B7 2, B8–B9 3–5 (most of it the tests that use the
 old role names). The roles work in B1 carries the most risk.
+
+## Integration continuation — 14 October 2026
+
+The owner authorized the remaining cross-layer work. Source fixes and synchronized interfaces are in
+SERVICE_INTEGRATION_REPORT.md and SERVICE_API_CONTRACT.md. Previous missing-report-field and export
+statements are historical; current source implements them. Tests and browser/visual acceptance remain
+skipped by owner instruction. This note does not mark the outstanding acceptance gates complete.

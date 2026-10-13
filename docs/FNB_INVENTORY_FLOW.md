@@ -50,6 +50,21 @@ transit lots, then the receiving kitchen; counts/waste/consumption deplete FIFO 
 restoration. No expiry is invented for unbatched opening stock or positive count corrections.
 
 B6 source and split verification are in `backend/docs/SERVICE_B6_REPORT.md`. B7 purchase dashboard/transfers,
-received-value bill settlement and new exception kinds remain incomplete in the inspected checkout. B8
+received-value bill settlement and new exception kinds are now implemented with B7 focused checks. B8
 showcase/profile-flow validation is pending; its mapping and prerequisite findings are in
 `backend/docs/SERVICE_B8_REPORT.md`. These flows do not establish deployment readiness or B9 sign-off.
+
+## Pre-B7 F6 confirmation (2026-10-13)
+
+Own-location lead may submit counts. Locks serialize count starts/writes. Discard marks only Counting as
+Discarded, retains history/lines, changes no stock/GL and permits next count. Snapshot adjustments retain
+frozen starting quantities; operations are not paused. Scoped waste returns cost/separate note; enquiry has
+average cost and rolling 14-day net sales use for all ingredients. Movement signs come from the selected
+location; references use owner registry providers. Requests retain timeline, manager/store notes, requested
+value and short reasons. Exact fields/limits: shared contract section 6 and SERVICE_PRE_B7_ANSWERS.md.
+B8 opening stock uses movement/GL owners; operational histories remain pending; B7 is implemented.
+
+B7 continuation (2026-10-13): manager venue/payment-hour, discount/void and purchase/transfer reports,
+untaxed received-value settlement and owner-provided exception feeds are implemented. Full/pilot evidence
+and limitations: `backend/docs/SERVICE_B7_REPORT.md`; shared contract section 8 records exact semantics.
+No deployment, public migration/seed or B9 acceptance is inferred from these checks.

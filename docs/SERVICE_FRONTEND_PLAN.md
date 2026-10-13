@@ -311,3 +311,24 @@ Intentional differences from the prototype, each with its reason (see "Visual fi
 - F7 data the server does not send: a purchase request line for an ingredient with no vendor goes under "Vendor not set" and Send is disabled until the vendor is known; a delivery with no time of day shows its day only and has no "delivers at …" banner until its day has passed; the use-by field is asked for unless the order line is known not to be perishable, and starts empty (the prototype pre-fills a demo date; an expiry is only what the delivery note says); no batch number is invented; a stock row with no batch shows "—".
 
 - F7 expiry wording: a batch's date is read as the moment it expires, the start of that day, as the prototype does, so a batch dated tomorrow reads "Expires today". This depends on what the backend's `expiry_date` means (asked in `docs/Backend-instructions/PRE_B7_F7_CONFIRMATIONS.md`).
+
+
+## Frontend continuation — 13 October 2026
+
+F6/F7 current-source reconciliation and the first F8 frontend implementation are recorded in frontend/docs/service-f8/REPORT.md. The Manager desk is registered for the consolidated service profile. Full builds retain their existing management layout; pilot builds use the service Manager desk. Inventory Stock/Costing and outlet Setup are contributed by their owning modules through registry slots.
+
+F8 is **not visually signed off** and F9 is **not release acceptance**. Fixture browser results are separate from live integration. Current-source availability is separate from loaded backend routes. F6/F7 retain the owner's no-screenshot-pairs decision and all existing pending decisions above.
+
+### Additional decisions and pending differences
+
+- F8 New purchase order: owner decision in this continuation is **Keep submission blocked pending backend support**. Retain the sheet with disabled Send order; do not substitute an ingredient purchase request. Direct PO creation lacks ingredient-linked lines and the second-manager policy.
+- F6 additional raw kinds (pending owner wording/layout approval): opening, sale_reversal and revaluation use Opening stock (box), Order reversal (receipt) and Cost adjustment (scale). Existing sales, received and dispatched rows map sale, receipt/transfer_in and transfer_out respectively, keeping the actual signed quantity and reference.
+- F8 required additional states, missing-data wording and roster/export differences remain pending as one review in frontend/docs/service-f8/OWNER_REVIEW.md and review.html. No test pass approves a deviation. No 8% recipe overhead, count variance, venue item sales, missing supplier performance or historical attribution is invented.
+- F7 receipt semantics follow current source: quantity_received is arrived quantity including rejects. The receiving form's accepted quantity plus rejected quantity is submitted as arrived; accepted valuation subtracts rejected quantity once. Fully rejected lines remain on the GRN with a reason. This corrects the transport mapping without changing the accepted/rejected form.
+
+## Integration continuation — 14 October 2026
+
+The owner authorized the remaining cross-layer work. Source fixes and synchronized interfaces are in
+SERVICE_INTEGRATION_REPORT.md and SERVICE_API_CONTRACT.md. Previous missing-report-field and export
+statements are historical; current source implements them. Tests and browser/visual acceptance remain
+skipped by owner instruction. This note does not mark the outstanding acceptance gates complete.
